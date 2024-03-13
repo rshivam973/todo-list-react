@@ -22,8 +22,9 @@ const ToDoComponent = ({todo, onToggle, onDelete, onPriorityChange}) => {
           checked={todo.completed}
           onChange={() => onToggle(todo.id)}
           className="me-2"
+          style={{ transform: "scale(1.5)"}}
         />
-      <div>{todo.content}</div>
+      <div style={{fontSize:'25px'}}>{todo.content}</div>
       <div>
       <span className="ms-2 text-muted">
           Priority: {!editPriority ? todo.priority : (

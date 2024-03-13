@@ -10,20 +10,43 @@ function App() {
   const [selectedSortPriority, setSelectedSortPriority] = useState('');
 
   useEffect(() => {
-    // Sort todos by priority when the component mounts
-    const savedTodos = JSON.parse(localStorage.getItem('todos'));
-    if (savedTodos) {
-      setTodos(savedTodos);
+    const  getTodos = async () => {
+      try {
+        const savedTodos = await JSON.parse(localStorage.getItem('todos'));
+        const priority = await localStorage.getItem('priority');
+        console.log("localStorage on mount:", savedTodos);
+    
+        if (savedTodos) {
+          console.log("setting todos: ", savedTodos);
+          setTodos(savedTodos);
+          setSelectedSortPriority(priority);
+        }
+      } catch (error) {
+        console.error("Error retrieving and parsing localStorage data:", error);
+      }
     }
-    sortTodosByPriority();
-  }, []);
+
+    getTodos();
+    
+    sortTodosByPriority(selectedSortPriority);
+  }, [selectedSortPriority]);
 
   useEffect(() => {
-    try {
-      localStorage.setItem('todos', JSON.stringify(todos));
-    } catch (error) {
-      console.log(error);
+    
+    const updateTodos = async()=>{
+      try {
+        const stringifiedTodos = await JSON.stringify(todos)
+        localStorage.setItem('todos', stringifiedTodos);
+        localStorage.setItem('sortPriority', selectedSortPriority);
+        console.log("Updated todos:", todos);
+        console.log('priority: ', selectedSortPriority);
+      } catch (error) {
+        console.error("Error saving todos to localStorage:", error);
+      }
     }
+
+    updateTodos();
+    
   }, [todos]);
 
   const deleteCompletedTodos = () => {
@@ -57,7 +80,6 @@ function App() {
         todo.id === id ? { ...todo, completed: !todo.completed } : todo
       )
     );
-    console.log("Clicked");
   };
 
   const handlePriorityChange = (id, newPriority) => {
@@ -68,13 +90,20 @@ function App() {
     );
   };
 
-  const sortTodosByPriority = () => {
-    const sortedTodos = [...todos].sort((a, b) => {
-      const priorityValues = { High: 3, Medium: 2, Low: 1 };
-      return priorityValues[b.priority] - priorityValues[a.priority];
-    });
+  const sortTodosByPriority = async(priority) => {
+    let sortedTodos = [];
+
+    if (priority === "High" || priority === "Medium" || priority === "Low") {
+      sortedTodos = todos.filter((todo) => todo.priority === priority);
+      const remainingTodos = todos.filter((todo) => todo.priority !== priority);
+      sortedTodos = sortedTodos.concat(remainingTodos);
+    } else {
+      sortedTodos = todos;
+    }
 
     setTodos(sortedTodos);
+    const stringifiedTodos = JSON.stringify(sortedTodos);
+    localStorage.setItem('todos', stringifiedTodos);
   };
 
   return (
@@ -126,7 +155,7 @@ function App() {
       <div className="my-4" style={{ color: "black", width: "10px" }} />
 
       {/* delete todos button */}
-      {todos.length != 0 && (
+      {todos.length !== 0 && (
         <div style={{width:'70%', display:'flex',alignItems:'self-end', justifyContent:'end', marginBottom:'20px' }}>
         <button
           type="button"
@@ -139,7 +168,7 @@ function App() {
       )}
 
       {/* Priority selection and sorting */}
-      {todos.length!=0 && (
+      {todos.length!==0 && (
         <div style={{width:'70%', display:'flex',alignItems:'self-end', justifyContent:'end', marginBottom:'10px'}}>
       <div className="mt-3" >
         <select
